@@ -29,13 +29,13 @@
                     <a href="#"><i class="icon_bag_alt"></i></a>
                   </li>
                   <li class="quick-view">
-                    <router-link to="/product">+ Quick View</router-link>
+                    <router-link v-bind:to="'/product/'+itemProduct.id">+ Quick View</router-link>
                   </li>
                 </ul>
               </div>
               <div class="pi-text">
                 <div class="catagory-name">{{ itemProduct.type }}</div>
-                <router-link to="/product">
+                <router-link v-bind:to="'/product/'+itemProduct.id">
                   <a href="#">
                     <h5>{{ itemProduct.name }}</h5>
                   </a>
