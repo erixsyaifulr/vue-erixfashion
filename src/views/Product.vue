@@ -64,16 +64,17 @@
                   </div>
                   <div class="pd-desc">
                     <p></p>
-                    <p>
-                      {{productDetails.description}}
-                    </p>
+                    <p v-html="productDetails.description"></p>
                     <h4>${{productDetails.price}}</h4>
                   </div>
                   <div class="quantity">
-                    <router-link to="/shopping-chart"><a
-                        href="shopping-cart.html"
+                    <router-link to="/shopping-chart">
+                      <a
+                        @click="addToChart(productDetails.id, productDetails.name, productDetails.price, productDetails.galleries[0].photo)"
+                        href="#"
                         class="primary-btn pd-cart"
-                      >Add To Cart</a></router-link>
+                      >Add To Cart</a>
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -108,13 +109,8 @@ export default {
   data() {
     return {
       image_default: "",
-      thumbs: [
-        "img/mickey1.jpg",
-        "img/mickey2.jpg",
-        "img/mickey3.jpg",
-        "img/mickey4.jpg",
-      ],
       productDetails: [],
+      chartUser: [],
     };
   },
   methods: {
@@ -125,8 +121,27 @@ export default {
       this.productDetails = data;
       this.image_default = data.galleries[0].photo;
     },
+    addToChart(idProduct, productName, price, photo) {
+      var productStored = {
+        id: idProduct,
+        name: productName,
+        price: price,
+        photo: photo,
+      };
+
+      this.chartUser.push(productStored);
+      const parse = JSON.stringify(this.chartUser);
+      localStorage.setItem("chartUser", parse);
+    },
   },
   mounted() {
+    if (localStorage.getItem("chartUser")) {
+      try {
+        this.chartUser = JSON.parse(localStorage.getItem("chartUser"));
+      } catch (error) {
+        localStorage.removeItem("chartUser");
+      }
+    }
     axios
       .get("https://erixfashion-api.pebatha.com/api/products", {
         params: {

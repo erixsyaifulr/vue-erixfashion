@@ -34,30 +34,29 @@
                         <th>Action</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr>
+                    <tbody v-if="chartUser.length > 0">
+                      <tr
+                        v-for="chart in chartUser"
+                        :key="chart.id"
+                      >
                         <td class="cart-pic first-row">
-                          <img src="img/cart-page/product-1.jpg" />
+                          <img :src="chart.photo" />
                         </td>
                         <td class="cart-title first-row text-center">
-                          <h5>Pure Pineapple</h5>
+                          <h5>{{chart.name}}</h5>
                         </td>
-                        <td class="p-price first-row">$60.00</td>
-                        <td class="delete-item"><a href="#"><i class="material-icons">
+                        <td class="p-price first-row">Rp {{chart.price}}</td>
+                        <td
+                          @click="removeItem(chart.id)"
+                          class="delete-item"
+                        ><a href="#"><i class="material-icons">
                               close
                             </i></a></td>
                       </tr>
+                    </tbody>
+                    <tbody v-else>
                       <tr>
-                        <td class="cart-pic first-row">
-                          <img src="img/cart-page/product-1.jpg" />
-                        </td>
-                        <td class="cart-title first-row text-center">
-                          <h5>Pure Pineapple</h5>
-                        </td>
-                        <td class="p-price first-row">$60.00</td>
-                        <td class="delete-item"><a href="#"><i class="material-icons">
-                              close
-                            </i></a></td>
+                        <td>Keranjang kosong</td>
                       </tr>
                     </tbody>
                   </table>
@@ -70,41 +69,45 @@
                 <div class="user-checkout text-left">
                   <form>
                     <div class="form-group">
-                      <label for="namaLengkap">Nama lengkap</label>
+                      <label for="name">Nama lengkap</label>
                       <input
                         type="text"
                         class="form-control"
-                        id="namaLengkap"
+                        id="name"
                         aria-describedby="namaHelp"
                         placeholder="Masukan Nama"
+                        v-model="customerInfo.name"
                       >
                     </div>
                     <div class="form-group">
-                      <label for="namaLengkap">Email Address</label>
+                      <label for="email">Email Address</label>
                       <input
                         type="email"
                         class="form-control"
-                        id="emailAddress"
+                        id="email"
                         aria-describedby="emailHelp"
                         placeholder="Masukan Email"
+                        v-model="customerInfo.email"
                       >
                     </div>
                     <div class="form-group">
-                      <label for="namaLengkap">No. HP</label>
+                      <label for="number">No. HP</label>
                       <input
                         type="text"
                         class="form-control"
-                        id="noHP"
+                        id="number"
                         aria-describedby="noHPHelp"
                         placeholder="Masukan No. HP"
+                        v-model="customerInfo.number"
                       >
                     </div>
                     <div class="form-group">
-                      <label for="alamatLengkap">Alamat Lengkap</label>
+                      <label for="address">Alamat Lengkap</label>
                       <textarea
                         class="form-control"
-                        id="alamatLengkap"
+                        id="address"
                         rows="3"
+                        v-model="customerInfo.address"
                       ></textarea>
                     </div>
                   </form>
@@ -118,17 +121,18 @@
                 <div class="proceed-checkout text-left">
                   <ul>
                     <li class="subtotal">ID Transaction <span>#SH12000</span></li>
-                    <li class="subtotal mt-3">Subtotal <span>$240.00</span></li>
-                    <li class="subtotal mt-3">Pajak <span>10%</span></li>
-                    <li class="subtotal mt-3">Total Biaya <span>$440.00</span></li>
+                    <li class="subtotal mt-3">Subtotal <span>Rp {{totalPrice}}</span></li>
+                    <li class="subtotal mt-3">Pajak <span>11%</span></li>
+                    <li class="subtotal mt-3">Total Biaya <span>Rp {{totalPrice - totalPriceTax}}</span></li>
                     <li class="subtotal mt-3">Bank Transfer <span>Mandiri</span></li>
                     <li class="subtotal mt-3">No. Rekening <span>2208 1996 1403</span></li>
-                    <li class="subtotal mt-3">Nama Penerima <span>Shayna</span></li>
+                    <li class="subtotal mt-3">Nama Penerima <span>erixfashion</span></li>
                   </ul>
-                  <router-link to="/success"><a
-                      href="#"
-                      class="proceed-btn"
-                    >I ALREADY PAID</a></router-link>
+                  <a
+                    @click="checkout()"
+                    class="proceed-btn"
+                    href="#"
+                  >I ALREADY PAID</a>
                 </div>
               </div>
             </div>
@@ -143,11 +147,74 @@
 
 <script>
 import HeaderErixCloth from "@/components/HeaderErixCloth.vue";
+import axios from "axios";
 
 export default {
   name: "ShoppingChart",
   components: {
     HeaderErixCloth,
+  },
+  data() {
+    return {
+      chartUser: [],
+      customerInfo: {
+        name: "",
+        email: "",
+        number: "",
+        address: "",
+      },
+    };
+  },
+  methods: {
+    removeItem(id) {
+      const items = JSON.parse(localStorage.getItem("chartUser"));
+      const filtered = items.filter((item) => item.id !== id);
+      localStorage.setItem("chartUser", JSON.stringify(filtered));
+    },
+    checkout() {
+      let productId = this.chartUser.map((item) => item.id);
+
+      let checkoutData = {
+        email: this.customerInfo.email,
+        name: this.customerInfo.name,
+        number: this.customerInfo.number,
+        address: this.customerInfo.address,
+        transaction_total: this.totalPrice - this.totalPriceTax,
+        transaction_status: "PENDING",
+        transaction_details: productId,
+      };
+
+      axios
+        .post("https://erixfashion-api.pebatha.com/api/checkout", checkoutData)
+        .then(() => this.$router.push("/success"))
+        .catch((err) => console.log(err));
+    },
+  },
+
+  mounted() {
+    if (localStorage.getItem("chartUser")) {
+      try {
+        this.chartUser = JSON.parse(localStorage.getItem("chartUser"));
+      } catch (error) {
+        localStorage.removeItem("chartUser");
+      }
+    }
+  },
+  computed: {
+    totalPrice() {
+      let total = 0;
+      this.chartUser.forEach((item) => {
+        total += parseInt(item.price);
+      });
+      return total;
+    },
+    totalPriceTax() {
+      let total = 0;
+      this.chartUser.forEach((item) => {
+        total += parseInt(item.price);
+      });
+      return total * 0.11;
+    },
   },
 };
 </script>
